@@ -1,0 +1,94 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'name', 'role']) &&
+        data.keys().hasOnly(['uid', 'email', 'name', 'role', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid.size() <= 128 && data.uid == request.auth.uid &&
+        data.email is string && data.email.size() <= 256 &&
+        data.name is string && data.name.size() <= 100 &&
+        data.role in ['student', 'teacher', 'admin'];
+    }
+
+    function isValidQuestion(data) {
+      return data.keys().hasAll(['grade', 'topic', 'difficulty', 'type', 'content']) &&
+        data.keys().hasOnly(['grade', 'topic', 'difficulty', 'type', 'content', 'createdAt', 'createdBy']) &&
+        data.grade == 9 &&
+        data.topic is string && data.topic.size() <= 200 &&
+        data.difficulty in ['Nhận biết', 'Thông hiểu', 'Vận dụng', 'Vận dụng cao'] &&
+        data.type == 'trắc nghiệm' &&
+        data.content is map &&
+        data.content.keys().hasAll(['text', 'options', 'answer', 'explanation']) &&
+        data.content.text is string && data.content.text.size() <= 2000 &&
+        data.content.options is list && data.content.options.size() == 4 &&
+        data.content.answer in ['A', 'B', 'C', 'D'] &&
+        data.content.explanation is string && data.content.explanation.size() <= 4000;
+    }
+
+    function isValidQuizResult(data) {
+      return data.keys().hasAll(['uid', 'topic', 'score', 'totalQuestions', 'percentage']) &&
+        data.keys().hasOnly(['uid', 'topic', 'score', 'totalQuestions', 'percentage', 'completedAt', 'userEmail', 'userName', 'answers']) &&
+        data.uid is string && data.uid == request.auth.uid &&
+        data.topic is string && data.topic.size() <= 200 &&
+        data.score is number && data.score >= 0 &&
+        data.totalQuestions is number && data.totalQuestions > 0 &&
+        data.percentage is number && data.percentage >= 0 && data.percentage <= 100;
+    }
+
+    // Collection: users
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // PII protection: no blanket user listing
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && incoming().uid == existing().uid;
+      allow delete: if false;
+    }
+
+    // Collection: questions
+    match /questions/{questionId} {
+      // Any authenticated user can read math questions
+      allow get, list: if isSignedIn();
+      // Allow seeding and managing questions
+      allow create: if isSignedIn() && isValidQuestion(incoming());
+      allow update: if isSignedIn() && isValidQuestion(incoming());
+      allow delete: if false;
+    }
+
+    // Collection: quiz_results
+    match /quiz_results/{resultId} {
+      allow get: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid && isValidQuizResult(incoming());
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

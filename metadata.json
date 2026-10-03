@@ -1,0 +1,7 @@
+{
+  "name": "Toán 9 Trắc Nghiệm - Nền Tảng Ôn Luyện Toán THCS",
+  "description": "Nền tảng kiểm tra và ôn luyện trắc nghiệm Toán lớp 9 THCS HK1 & HK2 với lời giải chi tiết và theo dõi kết quả học tập.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

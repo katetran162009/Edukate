@@ -1,0 +1,147 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Thông tin học sinh và người dùng hệ thống",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID của người dùng",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "Địa chỉ email của học sinh",
+          "maxLength": 256
+        },
+        "name": {
+          "type": "string",
+          "description": "Họ và tên học sinh",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Vai trò của người dùng (mặc định student)",
+          "enum": ["student", "teacher", "admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Thời gian tạo tài khoản (ISO String hoặc timestamp)"
+        }
+      },
+      "required": ["uid", "email", "name", "role"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "Câu hỏi trắc nghiệm Toán lớp 9 THCS",
+      "type": "object",
+      "properties": {
+        "grade": {
+          "type": "number",
+          "description": "Khối lớp (9)"
+        },
+        "topic": {
+          "type": "string",
+          "description": "Tên chuyên đề Toán 9 HK1 hoặc HK2",
+          "maxLength": 200
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "Mức độ câu hỏi (Nhận biết, Thông hiểu, Vận dụng)",
+          "enum": ["Nhận biết", "Thông hiểu", "Vận dụng", "Vận dụng cao"]
+        },
+        "type": {
+          "type": "string",
+          "description": "Loại câu hỏi",
+          "enum": ["trắc nghiệm"]
+        },
+        "content": {
+          "type": "object",
+          "description": "Nội dung câu hỏi, danh sách đáp án, đáp án đúng và lời giải chi tiết",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "Nội dung câu hỏi",
+              "maxLength": 1000
+            },
+            "options": {
+              "type": "array",
+              "description": "Danh sách 4 phương án lựa chọn A, B, C, D"
+            },
+            "answer": {
+              "type": "string",
+              "description": "Đáp án đúng (A, B, C hoặc D)",
+              "enum": ["A", "B", "C", "D"]
+            },
+            "explanation": {
+              "type": "string",
+              "description": "Lời giải chi tiết bài toán",
+              "maxLength": 2000
+            }
+          },
+          "required": ["text", "options", "answer", "explanation"]
+        }
+      },
+      "required": ["grade", "topic", "difficulty", "type", "content"]
+    },
+    "QuizResult": {
+      "title": "QuizResult",
+      "description": "Kết quả bài làm trắc nghiệm của học sinh",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "UID của học sinh làm bài",
+          "maxLength": 128
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "Email người làm bài",
+          "maxLength": 256
+        },
+        "userName": {
+          "type": "string",
+          "description": "Tên người làm bài",
+          "maxLength": 100
+        },
+        "topic": {
+          "type": "string",
+          "description": "Tên chuyên đề kiểm tra",
+          "maxLength": 200
+        },
+        "score": {
+          "type": "number",
+          "description": "Số câu trả lời đúng"
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Tổng số câu hỏi"
+        },
+        "percentage": {
+          "type": "number",
+          "description": "Điểm phần trăm (0 - 100)"
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Thời gian hoàn thành bài kiểm tra"
+        }
+      },
+      "required": ["uid", "topic", "score", "totalQuestions", "percentage"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Hồ sơ người dùng và học sinh"
+    },
+    "/questions/{questionId}": {
+      "schema": { "$ref": "#/entities/Question" },
+      "description": "Kho ngân hàng câu hỏi trắc nghiệm Toán 9"
+    },
+    "/quiz_results/{resultId}": {
+      "schema": { "$ref": "#/entities/QuizResult" },
+      "description": "Lịch sử điểm số bài thi của học sinh"
+    }
+  }
+}
